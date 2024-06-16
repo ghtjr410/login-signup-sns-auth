@@ -2,11 +2,12 @@ import InputBox from 'components/InputBox'
 import { ChangeEvent, KeyboardEvent, useRef, useState } from 'react'
 import './style.css';
 import { useNavigate } from 'react-router-dom';
-import { IdCheckRequestDto } from 'apis/request/auth';
-import { idCheckRequest } from 'apis';
-import { IdCheckResponseDto } from 'apis/response/auth';
+import { EmailCertificationRequestDto, IdCheckRequestDto } from 'apis/request/auth';
+import { emailCertificationRequest, idCheckRequest } from 'apis';
+import { EmailCertificationResponseDto, IdCheckResponseDto } from 'apis/response/auth';
 import { ResponseDto } from 'apis/response';
 import { ResponseCode } from 'types/enums';
+import { ResponseBody } from 'types';
 
 export default function SignUp () {
 
@@ -38,27 +39,24 @@ export default function SignUp () {
 
     const signUpButtonClass = id && password && passwordCheck && email && certificationNumber ?
         'primary-button-lg' : 'disable-button-lg';
+    
+    const emailPattern = /^[a-zA-Z0-9]*@([-.]?[a-zA-Z0-9])*\.[a-zA-Z]{2,4}$/;
 
     const navigate = useNavigate();
     
-    const idCheckResponse = (responseBody: IdCheckResponseDto | ResponseDto | null) => {
-        if (!responseBody) return;
+    const idCheckResponse = (responseBody: ResponseBody<IdCheckResponseDto>) => {
         
+        if (!responseBody) return;
         const{ code } = responseBody;
-
         
         if (code === ResponseCode.VAILDATION_FAIL) {
             alert ('아이디를 입력하세요.');
             return; // 이부분 구조 바꿔야돼 아래에 더쓸코드가없으면 switch로돌리던가 해야할듯 
         }
         if (code === ResponseCode.DUPLICATE_ID) {
-            
             setIdError(true);
-            
             setIdMessage('이미 사용중인 아이디 입니다.');
-            
             setIdCheck(false);
-            
             return; // 흠 이걸해야하나
         }
         if (code === ResponseCode.DATABASE_ERROR){ 
@@ -74,14 +72,33 @@ export default function SignUp () {
             setIdCheck(true);
             //return; // 마지막이라 리턴할필요없을듯
         }
+    }
 
-        
+    const emailCertificationResponse = (responseBody: ResponseBody<EmailCertificationResponseDto>) => {
+
+        if (!responseBody) return;
+        const { code } = responseBody;
+
+        if (code === ResponseCode.VAILDATION_FAIL) alert('아이디와 이메일을 모두 입력하세요');
+        if (code === ResponseCode.DUPLICATE_ID) {        
+            setIdError(true);
+            setIdMessage('이미 사용중인 아이디 입니다.');
+            setIdCheck(false);
+        }
+        if (code === ResponseCode.MAIL_FAIL) alert('이메일 전송에 실패했습니다.');
+        if (code === ResponseCode.DATABASE_ERROR) alert('데이터베이스 오류입니다.');
+        if (code !== ResponseCode.SUCCEESS) return;
+
+        setEmailError(false);
+        setEmailMessage('인증번호가 전송되었습니다.');
+
     }
 
     const onIdChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
         const { value } = event.target;
         setId(value);
         setIdMessage('');
+        setIdCheck(false);
     }
     const onPasswordChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
         const { value } = event.target;    
@@ -123,7 +140,16 @@ export default function SignUp () {
     };
     
     const onEmailButtonClickHandler = () => {
+        if(!id && !email) return;
+        const checkedEmail = emailPattern.test(email);
 
+        if(!checkedEmail){
+            setEmailError(true);
+            setEmailMessage('이메일 형식이 아닙니다.');
+            return;
+        }
+        const requestBody: EmailCertificationRequestDto = { id, email};
+        emailCertificationRequest(requestBody).then(emailCertificationResponse);
     };
     
     const onCertificationNumberButtonClickHandler = () => {
@@ -136,33 +162,33 @@ export default function SignUp () {
 
     const onSignInButtonClickHandler = () => {
         navigate('/auth/sign-in');
-    }
+    };
 
     const onIdKeyDownHandler = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== 'Enter') return;
         onIdButtonClickHandler();
         
-    }
+    };
     const onPasswordKeyDownHandler = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== 'Enter') return;
         if (!passwordCheckRef.current) return;
         passwordCheckRef.current.focus();
         
-    }
+    };
     const onPasswordCheckKeyDownHandler = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== 'Enter') return;
         if (!emailRef.current) return;
         emailRef.current.focus();
         
-    }
+    };
     const onEmailKeyDownHandler = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== 'Enter') return;
         onEmailButtonClickHandler();
-    }
+    };
     const onCertificationNumberKeyDownHandler = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== 'Enter') return;
         onCertificationNumberButtonClickHandler();
-    }
+    };
 
   return (
     <div id='sign-up-wrapper'>
