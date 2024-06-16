@@ -4,8 +4,8 @@ import EmailCertificationRequestDto from "./email-certification.request.dto";
 import CheckCertificationRequestDto from "./check-certification.request.dto";
 
 export type {
+    SignUpRequestDto,
     IdCheckRequestDto,
     EmailCertificationRequestDto,
     CheckCertificationRequestDto,
-    SignUpRequestDto
 }
