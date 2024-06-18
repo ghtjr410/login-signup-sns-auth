@@ -31,4 +31,12 @@ public class UserEntity {
         this.role = "ROLE_USER";
     }
 
+    public UserEntity (String userId, String email, String type) {
+        this.userId = userId;
+        this.password = "Passw0rd"; // OAuth에서는 비밀번호가 의미가없다
+        this.email = email;
+        this.type = type;
+        this.role = "ROLE_USER";
+    }
+
 }
