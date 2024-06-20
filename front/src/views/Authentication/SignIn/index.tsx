@@ -8,6 +8,7 @@ import { ResponseCode } from 'types/enums';
 import { ResponseBody } from 'types';
 import './style.css';
 import { useCookies } from 'react-cookie';
+import axios from 'axios';
 
 export default function SignIn () {
 
@@ -35,8 +36,8 @@ export default function SignIn () {
 
         const { token, expirationTime } = responseBody as SignInResponseDto;
 
-        const now = (new Date().getTime()) *1000; // 여기다가 1000곱하는게 맞아?
-        const expires = new Date(now + expirationTime);
+        const now = (new Date().getTime()); // 여기다가 1000곱하는게 맞아?
+        const expires = new Date(now + (expirationTime *1000));
 
         setCookie('accessToken', token, { expires, path: '/'});
         navigate('/');
@@ -72,6 +73,7 @@ export default function SignIn () {
         }
 
         const requestBody: SignInRequestDto = { id, password};
+
         signInRequest(requestBody).then(signInResponse);
 
     };
@@ -93,10 +95,57 @@ export default function SignIn () {
         onSignInButtonClickHandler();
         
     };
+    //////////////////////////////////////
+
+
+    const getCookie = (name: string): string | undefined => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift();
+    };
+    
+
+    const onHomeButtonClickHandler = () => {
+
+        
+
+        const signInRequest = async (token: string) => {
+            try {
+                // 토큰을 헤더에 포함하여 서버에 요청 보냄
+                const response = await axios.get("http://localhost:4040/api/v1/aaa/aaa", {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    withCredentials: true // 필요한 경우에 추가
+                });
+    
+                // 요청이 성공하면 마이페이지로 이동
+                navigate('/auth/user');
+            } catch (error) {
+                // 요청이 실패하면 에러 메시지 출력
+                console.error("못들어감", error);
+            }
+        };
+    
+        // 쿠키에서 JWT 토큰 가져오기
+        const token: string | undefined = getCookie('accessToken');
+    
+        if (token) {
+            console.log('Token found:', token);
+            signInRequest(token);
+        } else {
+            console.error('토큰이 없음');
+        }
+    };
+    ///////////////////////////////////////
+
+
 
   return (
     <div id='sign-in-wrapper'>
-        <div className='sign-in-image'></div>
+        <div className='sign-in-image'>
+            <button onClick={onHomeButtonClickHandler} > 홈페이지 이동</button>
+        </div>
         <div className='sign-in-container'>
             <div className='sign-in-box'>
                 <div className='sign-in-title'>{'아직못정한 서비스'}</div>
